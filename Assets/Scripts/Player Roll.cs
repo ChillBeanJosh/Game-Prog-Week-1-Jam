@@ -14,6 +14,7 @@ public class PlayerRoll : MonoBehaviour
     public float dashForce;
     public float dashUpwardForce;
     public float dashDuration;
+    public float dashTravelTime;
 
     [Header("Cooldown")]
     public float dashCd;
@@ -33,7 +34,7 @@ public class PlayerRoll : MonoBehaviour
     {
         if (Input.GetKeyDown(dashKey))
         {
-            Dashing();
+            StartCoroutine(Dashing());
         }
 
         if (dashCdTimer > 0)
@@ -43,16 +44,39 @@ public class PlayerRoll : MonoBehaviour
         }
 
     }
-    private void Dashing()
+
+    private IEnumerator Dashing()
     {
+        if (dashCdTimer > 0) yield break;
+        dashCdTimer = dashCd;
 
-        if (dashCdTimer > 0) return;
-        else dashCdTimer = dashCd;
+        // Determine the dash direction based on the player's facing direction
+        Vector3 dashDirection;
+        if (pm.horizontalInput > 0) // Moving right
+        {
+            dashDirection = transform.right; // [NEW]
+        }
+        else if (pm.horizontalInput < 0) // Moving left
+        {
+            dashDirection = -transform.right; // [NEW]
+        }
+        else
+        {
+            yield break; // No horizontal input, exit coroutine
+        }
 
-        Vector3 forceToApply = orientation.right * dashForce + orientation.up * dashUpwardForce;
-        rb.AddForce(forceToApply, ForceMode.Impulse);
-        Invoke(nameof(ResetDash), dashDuration);
+        float elapsedTime = 0f;
+        while (elapsedTime < dashTravelTime)
+        {
+            // Apply force gradually
+            Vector3 forceToApply = dashDirection * dashForce + Vector3.up * dashUpwardForce; // [NEW]
+            rb.AddForce(forceToApply * Time.deltaTime / dashTravelTime, ForceMode.VelocityChange); // [NEW]
+
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
     }
+
 
     private void ResetDash()
     {

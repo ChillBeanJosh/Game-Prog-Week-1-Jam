@@ -216,26 +216,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 0
-  walkSpeed: 0
-  sprintSpeed: 0
-  groundDrag: 1
-  airResistance: 0.5
-  slideSpeed: 0
-  speedIncreaseMultiplier: 0
-  slopeIncreaseMultiplier: 0
-  jumpForce: 0
-  jumpCooldown: 0
-  airMultiplier: 0
-  crouchSpeed: 0
-  crouchYScale: 0
+  walkSpeed: 5
+  sprintSpeed: 7
+  groundDrag: 5
+  airResistance: 2
+  slideSpeed: 10
+  speedIncreaseMultiplier: 0.4
+  slopeIncreaseMultiplier: 1
+  jumpForce: 10
+  jumpCooldown: 0.2
+  airMultiplier: 0.4
+  crouchSpeed: 1
+  crouchYScale: 0.5
   jumpKey: 119
   sprintKey: 304
   crouchKey: 306
-  playerHeight: 0
+  playerHeight: 2
   whatIsGround:
     serializedVersion: 2
     m_Bits: 64
-  maxSlopeAngle: 0
+  maxSlopeAngle: 45
   orientation: {fileID: 6474774993280874293}
   horizontalInput: 0
   sliding: 0
@@ -253,10 +253,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   orientation: {fileID: 6474774993280874293}
-  dashForce: 0
+  dashForce: 300
   dashUpwardForce: 0
-  dashDuration: 0
-  dashCd: 0
+  dashDuration: 0.3
+  dashTravelTime: 0.3
+  dashCd: 1
   dashKey: 113
 --- !u!114 &9077652463607761075
 MonoBehaviour:
@@ -271,10 +272,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   orientation: {fileID: 6474774993280874293}
-  dashForce: 0
+  dashForce: 25
   dashUpwardForce: 0
   dashDuration: 0
-  dashCd: 0
+  dashCd: 2
   dashKey: 32
 --- !u!114 &6933513628718200477
 MonoBehaviour:

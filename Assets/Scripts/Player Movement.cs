@@ -66,6 +66,8 @@ public class PlayerMovement : MonoBehaviour
     [HideInInspector] public bool sliding;
     [HideInInspector] public MovementState state;
 
+    private Vector3 initialScale;
+
     void Start()
     {
         // get rigidbody
@@ -75,6 +77,8 @@ public class PlayerMovement : MonoBehaviour
         readyToJump = true;
 
         startYScale = transform.localScale.y;
+
+        initialScale = transform.localScale;
     }
 
     void Update()
@@ -96,6 +100,8 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.drag = airResistance;
         }
+
+        FlipPlayer();
     }
 
     void FixedUpdate()
@@ -341,5 +347,19 @@ public class PlayerMovement : MonoBehaviour
         }
 
         return false;
+    }
+
+    void FlipPlayer()
+    {
+        if (horizontalInput > 0)
+        {
+            // Moving right, face right
+            transform.localScale = new Vector3(initialScale.x, transform.localScale.y, transform.localScale.z); 
+        }
+        else if (horizontalInput < 0)
+        {
+            // Moving left, face left (flip by inverting the x scale)
+            transform.localScale = new Vector3(-initialScale.x, transform.localScale.y, transform.localScale.z); 
+        }
     }
 }
