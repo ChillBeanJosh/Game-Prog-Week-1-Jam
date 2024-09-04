@@ -4,11 +4,12 @@ using UnityEngine;
 
 public class PlayerRoll : MonoBehaviour
 {
-    [Header("Refrences")]
+    [Header("References")]
     public Transform orientation;
     //public Transform playerCam;
     private Rigidbody rb;
     private PlayerMovement pm;
+    public Animator animator;
 
     [Header("Dashing")]
     public float dashForce;
@@ -22,7 +23,6 @@ public class PlayerRoll : MonoBehaviour
 
     [Header("Input")]
     public KeyCode dashKey = KeyCode.Q;
-
 
     private void Start()
     {
@@ -40,9 +40,7 @@ public class PlayerRoll : MonoBehaviour
         if (dashCdTimer > 0)
         {
             dashCdTimer -= Time.deltaTime;
-
         }
-
     }
 
     private IEnumerator Dashing()
@@ -50,15 +48,21 @@ public class PlayerRoll : MonoBehaviour
         if (dashCdTimer > 0) yield break;
         dashCdTimer = dashCd;
 
+        // Trigger roll animation
+        animator.SetTrigger("Roll");
+
+        // Wait for a brief moment before starting the dash
+        yield return new WaitForSeconds(0.3f); // Adjust this delay as needed
+
         // Determine the dash direction based on the player's facing direction
         Vector3 dashDirection;
         if (pm.horizontalInput > 0) // Moving right
         {
-            dashDirection = transform.right; // [NEW]
+            dashDirection = transform.right; 
         }
         else if (pm.horizontalInput < 0) // Moving left
         {
-            dashDirection = -transform.right; // [NEW]
+            dashDirection = -transform.right; 
         }
         else
         {
@@ -77,9 +81,8 @@ public class PlayerRoll : MonoBehaviour
         }
     }
 
-
     private void ResetDash()
     {
-
+        // Implement if needed
     }
 }

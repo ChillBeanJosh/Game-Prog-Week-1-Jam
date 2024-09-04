@@ -4,27 +4,27 @@ using UnityEngine;
 
 public class boulderPush : MonoBehaviour
 {
-    //public Animator animator;                // Reference to the Animator component
+    public Animator animator;                // Reference to the Animator component
     public float punchRadius = 2f;           // Radius of the OverlapSphere
     public LayerMask boulderLayer;           // Layer mask to detect the boulder
     public float pushDistance = 5f;          // Distance the boulder will be pushed back
     public float pushSpeed = 2f;             // Speed at which the boulder moves back
-    public Transform punchOrigin;           // The origin point for the punch, usually the player's position
+    public Transform punchOrigin;            // The origin point for the punch, usually the player's position
     public KeyCode punchFist = KeyCode.E;
+    public float pushDelay = 0.5f;           // Adjustable delay before the boulder starts moving 
 
-
-    void Update()
+    private void Update()
     {
         if (Input.GetKeyDown(punchFist))
         {
-            Punch();
+            StartCoroutine(Punch());
         }
     }
 
-    void Punch()
+    private IEnumerator Punch()
     {
         // Trigger punch animation
-        //animator.SetTrigger("Punch");
+        animator.SetTrigger("Punch");
 
         // Detect objects within the punch radius
         Collider[] hitColliders = Physics.OverlapSphere(punchOrigin.position, punchRadius, boulderLayer);
@@ -33,16 +33,21 @@ public class boulderPush : MonoBehaviour
         {
             if (hitCollider.CompareTag("Boulder"))
             {
-                // Calculate the push direction (opposite of the player's forward direction)
-                Vector3 pushDirection = transform.right;
+                // Determine the push direction based on the player's facing direction
+                Vector3 pushDirection = transform.localScale.x == 1 ? Vector3.right : Vector3.left;
+
+                // Wait for the specified delay before moving the boulder
+                yield return new WaitForSeconds(pushDelay); 
 
                 // Start the coroutine to move the boulder
                 StartCoroutine(PushBoulder(hitCollider.transform, pushDirection));
             }
         }
+
+        yield return null; // Ensure the coroutine has a return value for consistency
     }
 
-    System.Collections.IEnumerator PushBoulder(Transform boulder, Vector3 direction)
+    private IEnumerator PushBoulder(Transform boulder, Vector3 direction)
     {
         float distanceMoved = 0f;
 
@@ -60,7 +65,7 @@ public class boulderPush : MonoBehaviour
     }
 
     // Optional: Draw the overlap sphere in the editor for debugging
-    void OnDrawGizmosSelected()
+    private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(punchOrigin.position, punchRadius);
