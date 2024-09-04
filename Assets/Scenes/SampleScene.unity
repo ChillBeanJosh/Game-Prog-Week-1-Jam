@@ -737,6 +737,10 @@ PrefabInstance:
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 9077652463607761075, guid: 455f7cf25ec564bab98f33f3178395bb, type: 3}
+      propertyPath: animator
+      value: 
+      objectReference: {fileID: 923591011}
+    - target: {fileID: 9077652463607761075, guid: 455f7cf25ec564bab98f33f3178395bb, type: 3}
       propertyPath: dashForce
       value: 15
       objectReference: {fileID: 0}

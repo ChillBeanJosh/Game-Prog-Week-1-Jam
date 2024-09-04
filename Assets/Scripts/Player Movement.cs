@@ -45,7 +45,9 @@ public class PlayerMovement : MonoBehaviour
     RaycastHit slopeHit;
     bool exitingSlope;
 
-    [Header("Others")] public Transform orientation;
+    [Header("Others")]
+    public Transform orientation;
+    public Animator animator; // [NEW]
 
     [HideInInspector] public float horizontalInput;
     //[HideInInspector] public float verticalInput;
@@ -59,8 +61,10 @@ public class PlayerMovement : MonoBehaviour
         walking,
         sprinting,
         crouching,
+        crouchWalking,
         sliding,
-        air
+        air,
+        idle // [NEW]
     }
 
     [HideInInspector] public bool sliding;
@@ -84,7 +88,6 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         // ground check
-        // We do this by shooting a ray down from our current position to half the height of the player plus a little bit more to see if we hit the ground.
         grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
 
         MyInput();
@@ -92,14 +95,7 @@ public class PlayerMovement : MonoBehaviour
         StateHandler();
 
         // handle drag
-        if (grounded)
-        {
-            rb.drag = groundDrag;
-        }
-        else
-        {
-            rb.drag = airResistance;
-        }
+        rb.drag = grounded ? groundDrag : airResistance;
 
         FlipPlayer();
     }
@@ -108,7 +104,7 @@ public class PlayerMovement : MonoBehaviour
     {
         MovePlayer();
 
-        // check for valid uncrouch - works for crouching and slide uncrouching
+        // check for valid uncrouch
         if (transform.localScale != new Vector3(transform.localScale.x, startYScale, transform.localScale.z))
         {
             if (!Input.GetKey(crouchKey) && ValidUncrouch())
@@ -119,19 +115,17 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // get input
     void MyInput()
     {
         horizontalInput = Input.GetAxisRaw("Horizontal");
         //verticalInput = Input.GetAxisRaw("Vertical");
 
         // when to jump
-        if (Input.GetKey(jumpKey) && readyToJump && grounded)
+        if (Input.GetKeyDown(jumpKey) && readyToJump && grounded)
         {
             readyToJump = false;
-
             Jump();
-
+            animator.SetTrigger("Jump"); // [NEW]
             Invoke(nameof(ResetJump), jumpCooldown);
         }
 
@@ -139,11 +133,10 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetKeyDown(crouchKey))
         {
             transform.localScale = new Vector3(transform.localScale.x, crouchYScale, transform.localScale.z);
-
             rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
         }
 
-        // uncrouching - should probably implement checking if you can safely stand up first
+        // uncrouching
         // if (Input.GetKeyUp(crouchKey) && validUncrouch())
         // {
         //     transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z);
@@ -153,44 +146,44 @@ public class PlayerMovement : MonoBehaviour
     void StateHandler()
     {
         // sliding
-        // COMPLETED: implement sliding only when sprinting so that auto-uncrouching doesn't screw up
         if (sliding)
         {
             state = MovementState.sliding;
-
-            if (OnSlope() && rb.velocity.y < 0.1f)
+            desiredMoveSpeed = OnSlope() && rb.velocity.y < 0.1f ? slideSpeed : sprintSpeed;
+        }
+        // crouching
+        else if (Input.GetKey(crouchKey))
+        {
+            if (horizontalInput == 0)
             {
-                desiredMoveSpeed = slideSpeed;
+                state = MovementState.crouching;
+                desiredMoveSpeed = crouchSpeed;
             }
             else
             {
-                desiredMoveSpeed = sprintSpeed;
+                state = MovementState.crouchWalking;
+                desiredMoveSpeed = crouchSpeed;
             }
         }
-
-        // crouching - first if statement because least specific condition
-        else if (Input.GetKey(crouchKey))
-        {
-            state = MovementState.crouching;
-            desiredMoveSpeed = crouchSpeed;
-        }
-
         // sprinting
-        // NOTE: sprinting state won't change properly
         else if (grounded && Input.GetKey(sprintKey))
         {
             isSprinting = !isSprinting;
             state = MovementState.sprinting;
             desiredMoveSpeed = sprintSpeed;
         }
-
         // walking
-        else if (grounded && !isSprinting)
+        else if (grounded && horizontalInput != 0)
         {
             state = MovementState.walking;
             desiredMoveSpeed = walkSpeed;
         }
-
+        // idle
+        else if (grounded && horizontalInput == 0)
+        {
+            state = MovementState.idle;
+            desiredMoveSpeed = walkSpeed; // Or 0 if you want the player to stop
+        }
         // air
         else
         {
@@ -209,6 +202,9 @@ public class PlayerMovement : MonoBehaviour
         }
 
         lastDesiredMoveSpeed = desiredMoveSpeed;
+
+        // Update animations
+        UpdateAnimations(); // [NEW]
     }
 
     IEnumerator SmoothlyLerpMoveSpeed()
@@ -250,19 +246,16 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.AddForce(GetSlopeMoveDirection(moveDirection) * moveSpeed * 20f, ForceMode.Force);
 
-            // if moving forward on slope, keep the player down
             if (rb.velocity.y > 0)
             {
                 rb.AddForce(Vector3.down * 80f, ForceMode.Force);
             }
         }
-
         // on ground
         else if (grounded)
         {
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
         }
-
         // in air
         else if (!grounded)
         {
@@ -274,7 +267,6 @@ public class PlayerMovement : MonoBehaviour
 
     void speedControl()
     {
-
         // limiting speed on slope
         if (OnSlope() && !exitingSlope)
         {
@@ -283,36 +275,28 @@ public class PlayerMovement : MonoBehaviour
                 rb.velocity = rb.velocity.normalized * moveSpeed;
             }
         }
-
         else
         {
             Vector3 flatVelocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
 
-            // limit velocity if needed
             if (flatVelocity.magnitude > moveSpeed)
             {
                 Vector3 limitedVelocity = flatVelocity.normalized * moveSpeed;
                 rb.velocity = new Vector3(limitedVelocity.x, rb.velocity.y, limitedVelocity.z);
             }
         }
-
     }
 
     void Jump()
     {
         exitingSlope = true;
-
-        // reset y velocity
         rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
-
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
-
     }
 
     void ResetJump()
     {
         readyToJump = true;
-
         exitingSlope = false;
     }
 
@@ -320,14 +304,9 @@ public class PlayerMovement : MonoBehaviour
     {
         if (Physics.Raycast(transform.position, Vector3.down, out slopeHit, playerHeight * 0.5f + 0.3f))
         {
-            // calculate how steep the slope we're standing on is
             float angle = Vector3.Angle(Vector3.up, slopeHit.normal);
-
-            // return whether or not the angle of the slope we're on is less than the max slope angle and isn't flat
             return angle < maxSlopeAngle && angle != 0;
         }
-
-        // raycast didn't hit anything
         return false;
     }
 
@@ -338,28 +317,30 @@ public class PlayerMovement : MonoBehaviour
 
     public bool ValidUncrouch()
     {
-        // perform a raycast upward to see if there's enough space to walk after uncrouch
         Debug.DrawRay(transform.position, Vector3.up, Color.blue, 1f);
-
-        if (!Physics.Raycast(transform.position, Vector3.up, playerHeight))
-        {
-            return true;
-        }
-
-        return false;
+        return !Physics.Raycast(transform.position, Vector3.up, playerHeight);
     }
 
     void FlipPlayer()
     {
         if (horizontalInput > 0)
         {
-            // Moving right, face right
-            transform.localScale = new Vector3(initialScale.x, transform.localScale.y, transform.localScale.z); 
+            transform.localScale = new Vector3(initialScale.x, transform.localScale.y, transform.localScale.z);
         }
         else if (horizontalInput < 0)
         {
-            // Moving left, face left (flip by inverting the x scale)
-            transform.localScale = new Vector3(-initialScale.x, transform.localScale.y, transform.localScale.z); 
+            transform.localScale = new Vector3(-initialScale.x, transform.localScale.y, transform.localScale.z);
         }
+    }
+
+    void UpdateAnimations() // [NEW]
+    {
+        animator.SetBool("isWalking", state == MovementState.walking);
+        animator.SetBool("isSprinting", state == MovementState.sprinting);
+        animator.SetBool("isCrouching", state == MovementState.crouching);
+        animator.SetBool("isCrouchWalking", state == MovementState.crouchWalking);
+        //animator.SetBool("isSliding", state == MovementState.sliding);
+        animator.SetBool("isIdle", state == MovementState.idle);
+        // Add other animation parameters as needed
     }
 }

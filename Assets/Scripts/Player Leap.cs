@@ -9,6 +9,7 @@ public class PlayerLeap : MonoBehaviour
     //public Transform playerCam;
     private Rigidbody rb;
     private PlayerMovement pm;
+    public Animator animator;
 
     [Header("Dashing")]
     public float dashForce;
@@ -48,6 +49,10 @@ public class PlayerLeap : MonoBehaviour
 
         if (dashCdTimer > 0) return;
         else dashCdTimer = dashCd;
+
+        animator.SetTrigger("Leap");
+
+
 
         Vector3 forceToApply = orientation.up * dashForce + orientation.up * dashUpwardForce;
         rb.AddForce(forceToApply, ForceMode.Impulse);
