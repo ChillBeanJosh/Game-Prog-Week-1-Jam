@@ -152,6 +152,7 @@ GameObject:
   - component: {fileID: 735136604256298351}
   - component: {fileID: 9077652463607761075}
   - component: {fileID: 6933513628718200477}
+  - component: {fileID: 4913707871416841284}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -304,6 +305,22 @@ MonoBehaviour:
   punchOrigin: {fileID: 7581327598534475157}
   punchFist: 101
   pushDelay: 0.5
+--- !u!114 &4913707871416841284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6901986428454144371}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3e6c0f56cccd4f298553f4b6174036f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timerText: {fileID: 0}
+  stopwatchEnder:
+    serializedVersion: 2
+    m_Bits: 512
 --- !u!1 &7079720913637357697
 GameObject:
   m_ObjectHideFlags: 0
